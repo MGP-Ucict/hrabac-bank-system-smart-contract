@@ -21,4 +21,4 @@ npx hardhat test
 
 # Unit tests pass successfully.
 
-![Runned tests output](images/hardhat-tests.png)
+![Runned tests output](images/hardhat_tests.png)
