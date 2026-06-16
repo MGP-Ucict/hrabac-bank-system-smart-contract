@@ -6,8 +6,8 @@ contract BankSystem {
     address public admin;
 
   
-    mapping(address => uint256) public clients;
-    mapping(address => bool) public isActiveClients;
+    mapping(address => uint256) public customers;
+    mapping(address => bool) public isActiveCustomers;
     mapping(address => uint256) public employees;
     mapping(address => bool) public isActiveEmployees;
     mapping(address => uint256) public managers;
@@ -19,7 +19,7 @@ contract BankSystem {
     
     struct Transfer {
         uint256 amount;
-        uint256 clientID;   
+        uint256 customerID;   
         uint256 receiverID; 
         uint256 employeeID; 
         Status status;
@@ -44,10 +44,10 @@ contract BankSystem {
     }
 
   
-    function registerClient(address _hardwareAddress, uint256 _clientID) external onlyAdmin {
-        clients[_hardwareAddress] = _clientID;
-        isActiveClients[_hardwareAddress] = true;
-        emit RoleStatusChanged(_clientID, "Client", true, block.timestamp);
+    function registerCustomer(address _hardwareAddress, uint256 _customerID) external onlyAdmin {
+        customers[_hardwareAddress] = _customerID;
+        isActiveCustomers[_hardwareAddress] = true;
+        emit RoleStatusChanged(_customerID, "Customer", true, block.timestamp);
     }
 
     function registerEmployee(address _hardwareAddress, uint256 _employeeID) external onlyAdmin {
@@ -63,9 +63,9 @@ contract BankSystem {
     }
 
 
-    function setClientActiveStatus(address _hardwareAddress, bool _status) external onlyAdmin {
-        isActiveClients[_hardwareAddress] = _status;
-        emit RoleStatusChanged(clients[_hardwareAddress], "Client", _status, block.timestamp);
+    function setCustomerActiveStatus(address _hardwareAddress, bool _status) external onlyAdmin {
+        isActiveCustomers[_hardwareAddress] = _status;
+        emit RoleStatusChanged(customers[_hardwareAddress], "Customer", _status, block.timestamp);
     }
 
     function setEmployeeActiveStatus(address _hardwareAddress, bool _status) external onlyAdmin {
@@ -80,19 +80,19 @@ contract BankSystem {
 
     function createTransfer(uint256 _receiverID) external  payable{
       
-        require(clients[msg.sender] > 0 && isActiveClients[msg.sender], "Rejection: Unauthorized or inactive employee!");
+        require(customers[msg.sender] > 0 && isActiveCustomers[msg.sender], "Rejection: Unauthorized or inactive customer!");
         require(msg.value > 0, "Cancellation: Transaction amount must be greater than 0!");
 
         transferCount++;
         transfers[transferCount] = Transfer({
             amount: msg.value,
-            clientID: clients[msg.sender],
+            customerID: customers[msg.sender],
             receiverID: _receiverID,
             employeeID: 0,
             status: Status.Pending
         });
 
-        emit TransferCreated(transferCount, clients[msg.sender], msg.value, _receiverID);
+        emit TransferCreated(transferCount, customers[msg.sender], msg.value, _receiverID);
     }
 
     function approveTransfer(uint256 _id) external {     
@@ -110,20 +110,20 @@ contract BankSystem {
   
     function getTransferDetails(uint256 _id) external view returns (
         uint256 amount, 
-        uint256 client, 
+        uint256 customer, 
         uint256 receiver, 
         Status status
     ) {
         Transfer memory t = transfers[_id];
 
         require(
-            (clients[msg.sender] > 0 && isActiveClients[msg.sender] && clients[msg.sender] == t.clientID) || 
+            (customers[msg.sender] > 0 && isActiveCustomers[msg.sender] && customers[msg.sender] == t.customerID) || 
             (employees[msg.sender] > 0 && isActiveEmployees[msg.sender] && employees[msg.sender] == t.employeeID) || 
             (managers[msg.sender] > 0 && isActiveManagers[msg.sender]), 
             "Cancellation: Insufficient rights to view transaction data!"
         );
 
-        return (t.amount, t.clientID, t.receiverID, t.status);
+        return (t.amount, t.customerID, t.receiverID, t.status);
     }
 }
 
