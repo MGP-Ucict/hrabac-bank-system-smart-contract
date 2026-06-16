@@ -34,8 +34,8 @@ describe("BankSystem", function () {
 			await bank.connect(admin).registerEmployee(employee1.address, EMPLOYEE_1_ID);
 			await bank.connect(admin).registerManager(manager1.address, MANAGER_1_ID);
 		});
-		describe("1. Transaction Lifecycle and GDPR Compliance", function () {
-			it("Customer creates a transaction - access control test", async function () {
+		describe("1. Transaction Lifecycle", function () {
+			it("Customer creates a transaction", async function () {
 				const transferAmount = ethers.parseEther("2.5"); // 2.5 ETH
 				console.time("Method Execution Time");
 				// STEP 1: C 1 initiates a payment. The blockchain itself extracts its structure via msg.sender
@@ -46,7 +46,7 @@ describe("BankSystem", function () {
 				.to.emit(bank, "TransferCreated")
 				.withArgs(1, CUSTOMER_1_ID, transferAmount, RECEIVER_ID);
 			});
-			it("Employee approves a transaction - acceess control test", async function () {
+			it("Employee approves a transaction", async function () {
 				// STEP 2: Employee 1 approves transaction #1
 				console.time("Method Execution Time");
 				const approveTx = await bank.connect(employee1).approveTransfer(1);
@@ -59,7 +59,7 @@ describe("BankSystem", function () {
 			});
 		});
 		describe("2. Attacks simulation", function () {
-			it("A hacker receives an immediate rejection - access control test", async function () {
+			it("A hacker receives an immediate rejection", async function () {
 				const transferAmount = ethers.parseEther("1.0");
 				const createTx2 = await bank.connect(customer1).createTransfer(RECEIVER_ID, { value: transferAmount });
 				await expect(createTx2)
@@ -71,7 +71,7 @@ describe("BankSystem", function () {
 				.to.be.revertedWith("Rejection: Inactive employee!");
 				console.timeEnd("Method Execution Time");
 			});
-			it("Fired employee rejected to approve - access control test", async function () {
+			it("Fired employee is forbidden to approve transaction", async function () {
 				// 1. The IT Administrator changes the status of employee1's device to false
 				const deactivateTx = await bank.connect(admin).setEmployeeActiveStatus(employee1.address, false);
 				const currentTimestamp = await ethers.provider.getBlock("latest").then(b => b.timestamp);
@@ -88,7 +88,7 @@ describe("BankSystem", function () {
 				.to.be.revertedWith("Rejection: Inactive employee!");
 				console.timeEnd("Method Execution Time");
 			});
-			it("Customer 2 is forbidden to read the data of Customer 1 - access control test", async function () {
+			it("Customer 2 is forbidden to read the data of Customer 1", async function () {
 				// Customer 2 is trying to read the details of transfer #1 from his phone
 				const transferAmount = ethers.parseEther("1.0");
 				const createTx2 = await bank.connect(customer1).createTransfer(RECEIVER_ID, { value: transferAmount });
