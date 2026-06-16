@@ -15,7 +15,7 @@ contract BankSystem {
 
     
     enum Status { Pending, Executed, Rejected }
-
+    error UnauthorizedAccess();
     
     struct Transfer {
         uint256 amount;
@@ -96,8 +96,7 @@ contract BankSystem {
     }
 
     function approveTransfer(uint256 _id) external {     
-        require(isActiveEmployees[msg.sender], "Rejection: Inactive employee!");
-        require(employees[msg.sender] != 0, "Rejection: Unauthorized employee!");
+        if(!isActiveEmployees[msg.sender] || employees[msg.sender] == 0) revert UnauthorizedAccess();
         Transfer storage t = transfers[_id];
         require(t.status == Status.Pending, "Cancellation: The transaction is not waiting for approval!");
 
@@ -116,12 +115,12 @@ contract BankSystem {
     ) {
         Transfer memory t = transfers[_id];
 
-        require(
-            (customers[msg.sender] > 0 && isActiveCustomers[msg.sender] && customers[msg.sender] == t.customerID) || 
+       if(
+            !((customers[msg.sender] > 0 && isActiveCustomers[msg.sender] && customers[msg.sender] == t.customerID) || 
             (employees[msg.sender] > 0 && isActiveEmployees[msg.sender] && employees[msg.sender] == t.employeeID) || 
-            (managers[msg.sender] > 0 && isActiveManagers[msg.sender]), 
-            "Cancellation: Insufficient rights to view transaction data!"
-        );
+            (managers[msg.sender] > 0 && isActiveManagers[msg.sender]))
+        )
+        revert UnauthorizedAccess();
 
         return (t.amount, t.customerID, t.receiverID, t.status);
     }

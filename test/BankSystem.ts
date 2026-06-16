@@ -39,7 +39,7 @@ describe("BankSystem", function () {
 				const transferAmount = ethers.parseEther("2.5"); // 2.5 ETH
 				console.time("Method Execution Time");
 				// STEP 1: C 1 initiates a payment. The blockchain itself extracts its structure via msg.sender
-				const createTx2 = bank.connect(customer1).createTransfer(RECEIVER_ID, { value: transferAmount });
+				const createTx2 = await bank.connect(customer1).createTransfer(RECEIVER_ID, { value: transferAmount });
 				console.timeEnd("Method Execution Time");
 				// SCIENTIFIC AUDIT: We check that the creation log does NOT contain hardware addresses (GDPR)
 				await expect(createTx2)
@@ -59,7 +59,7 @@ describe("BankSystem", function () {
 			});
 		});
 		describe("2. Attacks simulation", function () {
-			it("Hacker receives an immediate rejection", async function () {
+			it("Hacker is forbidden to approve transaction", async function () {
 				const transferAmount = ethers.parseEther("1.0");
 				const createTx2 = await bank.connect(customer1).createTransfer(RECEIVER_ID, { value: transferAmount });
 				await expect(createTx2)
@@ -67,11 +67,11 @@ describe("BankSystem", function () {
 				.withArgs(1, CUSTOMER_1_ID, transferAmount, RECEIVER_ID);
 				console.time("Method Execution Time");
 				//The hacker tries to call the function
-				expect(bank.connect(hacker).approveTransfer(1))
-				.to.be.revertedWith("Rejection: Inactive employee!");
+				await expect(bank.connect(hacker).approveTransfer(1))
+				.to.be.revertedWithCustomError(bank, "UnauthorizedAccess");
 				console.timeEnd("Method Execution Time");
 			});
-			it("Fired employee is forbidden to approve transaction", async function () {
+			it("Former employee is forbidden to approve transaction", async function () {
 				// 1. The IT Administrator changes the status of employee1's device to false
 				const deactivateTx = await bank.connect(admin).setEmployeeActiveStatus(employee1.address, false);
 				const currentTimestamp = await ethers.provider.getBlock("latest").then(b => b.timestamp);
@@ -84,8 +84,8 @@ describe("BankSystem", function () {
 				expect(isActiveEmployee).to.be.false;
 				console.time("Method Execution Time");
 				// 3. Former employee tries to approve a transaction directly in Arbitrum Orbit – EVM throws him out
-				expect(bank.connect(employee1).approveTransfer(1))
-				.to.be.revertedWith("Rejection: Inactive employee!");
+				await expect(bank.connect(employee1).approveTransfer(1))
+				.to.be.revertedWithCustomError(bank, "UnauthorizedAccess");
 				console.timeEnd("Method Execution Time");
 			});
 			it("Customer 2 is forbidden to read the data of Customer 1", async function () {
@@ -97,8 +97,8 @@ describe("BankSystem", function () {
 				.withArgs(1, CUSTOMER_1_ID, transferAmount, RECEIVER_ID);
 				// Since the ID in his structure (102) does not match the customerID of the transfer (101), the chain check is blocked
 				console.time("Method Execution Time");
-				expect(bank.connect(customer2).getTransferDetails(1))
-				.to.be.revertedWith("Cancellation: Insufficient rights to view transaction data!");
+				await expect(bank.connect(customer2).getTransferDetails(1))
+				.to.be.revertedWithCustomError(bank, "UnauthorizedAccess");
 				console.timeEnd("Method Execution Time");
 			});
 		});
