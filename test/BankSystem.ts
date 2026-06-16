@@ -59,7 +59,7 @@ describe("BankSystem", function () {
 			});
 		});
 		describe("2. Attacks simulation", function () {
-			it("A hacker receives an immediate rejection", async function () {
+			it("Hacker receives an immediate rejection", async function () {
 				const transferAmount = ethers.parseEther("1.0");
 				const createTx2 = await bank.connect(customer1).createTransfer(RECEIVER_ID, { value: transferAmount });
 				await expect(createTx2)
